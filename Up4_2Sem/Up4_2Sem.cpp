@@ -110,6 +110,7 @@ public:
 
 		auto converter = MathToHdcConverter(hWnd);
 
+	
 		MoveToEx(hdc, converter.GetX(-300), converter.GetY(0), nullptr);
 		LineTo(hdc, converter.GetX(300),converter.GetY(0));
 		MoveToEx(hdc, converter.GetX(0), converter.GetY(-200), nullptr);
@@ -135,9 +136,7 @@ public:
 
 		if (down)
 		{
-			SelectObject(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
-			SelectObject(hdc, pen1);
-			Rectangle(hdc, converter.GetX(x), converter.GetY(y), converter.GetX(x2), converter.GetY(y2));
+			
 
 		}
 
@@ -257,38 +256,106 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	HDC hdc;                   
+	RECT rcTmp;              
+	
+	static HDC hdcCompat;    // DC for copying bitmap  
+	static RECT rcBmp;       // rectangle that encloses bitmap  
+	static RECT rcTarget;    // rectangle to receive bitmap  
+	static RECT rcClient;    // client-area rectangle  
+	static BOOL fDragRect;   // TRUE if bitmap rect. is dragged  
+	static HBITMAP hbmp;     // handle of bitmap to display  
+	static HBRUSH hbrBkgnd;  // handle of background-color brush  
+	static COLORREF crBkgnd; // color of client-area background  
+	static POINT pt;
+	static HPEN hpenDot;
 	switch (message)
 	{
-	
+
+
+
 
 	case WM_LBUTTONDOWN:
 	{
 		down = true;
+	    hdc = GetDC(hWnd);
 		auto converter = MathToHdcConverter(hWnd);
 		x = (LOWORD(lParam) - converter.GetClientRect().right / 2) / scale;
 		y = -(HIWORD(lParam) - converter.GetClientRect().bottom / 2) / scale;
+
+		 
+		
 		char str[40];
 		sprintf_s(str, "x=%f y=%f", x, y);
-		HDC hdc = GetDC(hWnd);
 		TextOutA(hdc, 1, 1, str, strlen(str));
 		ReleaseDC(hWnd, hdc);
 		break;
 	}
 
-	case WM_MOVE :
+	/*case WM_MOUSEMOVE :
 	{
-		HDC hdc = GetDC(hWnd);
+		if (wParam & MK_LBUTTON)
+		{
+
+			HDC hdc = GetDC(hWnd);
+			auto converter = MathToHdcConverter(hWnd);
+			x2 = (LOWORD(lParam) - converter.GetClientRect().right / 2) / scale;
+			y2 = -(HIWORD(lParam) - converter.GetClientRect().bottom / 2) / scale;
+			SelectObject(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
+			Rectangle(hdc, converter.GetX(x), converter.GetY(y), converter.GetX(x2), converter.GetY(y2));
+
+
+			ReleaseDC(hWnd, hdc);
+
+
+		}
+		break;
+	}*/
+
+	case WM_MOUSEMOVE:
+
+	{	// Draw a target rectangle or drag the bitmap rectangle,
+		// depending on the status of the fDragRect flag.
 		auto converter = MathToHdcConverter(hWnd);
 		x2 = (LOWORD(lParam) - converter.GetClientRect().right / 2) / scale;
 		y2 = -(HIWORD(lParam) - converter.GetClientRect().bottom / 2) / scale;
-		
-	}
+		hdc = GetDC(hWnd);
+		if (wParam == MK_LBUTTON)
+		{
+			SetROP2(hdc, R2_NOTXORPEN);
+			if (!IsRectEmpty(&rcTarget))
+			{
+				InvalidateRect(hWnd,&rcTarget,TRUE);
+			}
+			UpdateWindow(hWnd);
+			if(x2 > x && y2 > y)
+			{
+				SetRect(&rcTarget, converter.GetX(x), converter.GetY(y2), converter.GetX(x2), converter.GetY(y));
+			}
+			else if(x2 < x && y2 < y)
+				{
+				SetRect(&rcTarget, converter.GetX(x2), converter.GetY(y), converter.GetX(x), converter.GetY(y2));
+				}
+			else if(x2 > x && y2 < y)
+			{
+				SetRect(&rcTarget, converter.GetX(x), converter.GetY(y), converter.GetX(x2), converter.GetY(y2));
+			} else
+			{
+				SetRect(&rcTarget, converter.GetX(x2), converter.GetY(y2), converter.GetX(x), converter.GetY(y));
+			}
+			SelectObject(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
+			Rectangle(hdc, rcTarget.left, rcTarget.top,
+				rcTarget.right, rcTarget.bottom);
 
-	case WM_LBUTTONUP :
-	{
-		down = false;
+
+		}
+			
+		
 		break;
 	}
+
+	
+	
 
 	case WM_PAINT:
 	{
@@ -297,8 +364,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		Program::OnDraw(hdc, hWnd);
 		
 		EndPaint(hWnd, &ps);
+		break;
 	}
-	break;
+	
 
 	
 	case WM_DESTROY:
