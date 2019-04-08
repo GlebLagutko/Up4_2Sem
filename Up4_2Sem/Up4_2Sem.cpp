@@ -12,7 +12,7 @@
 //Function i*i - 3*i + 3
 
 const double scale = 10;
-const double a = 0.5 ;
+const double a = 0.5;
 const double b = 6;
 const double c = 5;
 bool down = false;
@@ -21,6 +21,8 @@ float x = 0;
 float y = 0;
 float x2 = 0;
 float y2 = 0;
+const float epsS = 5.0;
+const float epsP = 5.0;
 
 namespace Colors
 {
@@ -83,14 +85,21 @@ private:
 		return GetClientRect().bottom / 2;
 	}
 
-	
-
 	double GetScale() const
 	{
-		
+
 		return scale;
 	}
 };
+
+double parab(double x, double a, double b, double c) {
+	auto y = a * x * x + b * x + c;
+	return y;
+}
+
+double Sin(double x, double a, double b) {
+	return (sin(a * x) + b);
+}
 
 class Program
 {
@@ -98,70 +107,55 @@ public:
 	static void OnDraw(HDC hdc, HWND hWnd)
 	{
 		auto pen1 = CreatePen(PS_SOLID, 2, Colors::Black);
-		auto pen2 = CreatePen(PS_SOLID, 1, RGB(255,0,0));
-		auto pen3 = CreatePen(PS_DOT, 1, RGB(0, 100, 0));
-		auto pen5 = CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
+		auto pen2 = CreatePen(PS_SOLID, 1, RGB(200, 100, 0));
+		auto pen3 = CreatePen(PS_SOLID, 3, RGB(0, 200, 100));
+		auto pen5 = CreatePen(PS_DOT, 1, RGB(100, 0, 200));
 
 		auto penBrush = LOGBRUSH{};
 		penBrush.lbColor = Colors::Turquoise3;
-		auto pen4 = ExtCreatePen(PS_GEOMETRIC | PS_DASH, 3, &penBrush, 0, nullptr);
-
-		//===
-
+		//auto pen4 = ExtCreatePen(PS_GEOMETRIC | PS_DASH, 3, &penBrush, 0, nullptr);
 
 		auto converter = MathToHdcConverter(hWnd);
 
-		
-		
-			MoveToEx(hdc, converter.GetX(-300), converter.GetY(0), nullptr);
-			LineTo(hdc, converter.GetX(300), converter.GetY(0));
-			MoveToEx(hdc, converter.GetX(0), converter.GetY(-200), nullptr);
-			LineTo(hdc, converter.GetX(0), converter.GetY(200));
-			auto hOldPen = SelectObject(hdc, pen2);
-			MoveToEx(hdc, converter.GetX(-200), converter.GetY(400), nullptr);
-			for (int i = -200; i < 200; i++) {
-				auto y = -2 * i;
-				LineTo(hdc, converter.GetX(i), converter.GetY(y));
-			}
-			SelectObject(hdc, pen3);
-			MoveToEx(hdc, converter.GetX(-200), converter.GetY(-a * 200 * -200 + b * -200 + c), nullptr);
-			for (int i = -200; i < 200; i++) {
-				auto y = a * i * i + b * i + c;
-				LineTo(hdc, converter.GetX(i), converter.GetY(y));
-			}
-			SelectObject(hdc, pen5);
-			MoveToEx(hdc, converter.GetX(-200), converter.GetY(sin(-200 * a) + b), nullptr);
-			for (int i = -200; i < 200; i++) {
-				auto y = sin(a*i) + b;
-				LineTo(hdc, converter.GetX(i), converter.GetY(y));
-			}
-		
-		
-		
-		
-		
+		MoveToEx(hdc, converter.GetX(-300), converter.GetY(0), nullptr);
+		LineTo(hdc, converter.GetX(300), converter.GetY(0));
+		MoveToEx(hdc, converter.GetX(0), converter.GetY(-200), nullptr);
+		LineTo(hdc, converter.GetX(0), converter.GetY(200));
+		auto hOldPen = SelectObject(hdc, pen2);
+		/*MoveToEx(hdc, converter.GetX(-200), converter.GetY(400), nullptr);
+		for (int i = -200; i < 200; i++) {
+			auto y = -2 * i;
+			LineTo(hdc, converter.GetX(i), converter.GetY(y));
+		}*/
+		SelectObject(hdc, pen3);
+		MoveToEx(hdc, converter.GetX(-200), converter.GetY(-a * 200 * -200 + b * -200 + c), nullptr);
+		for (int i = -200; i < 200; i++) {
+			auto y = parab(i, a, b, c);
+			LineTo(hdc, converter.GetX(i), converter.GetY(y));
+		}
+		SelectObject(hdc, pen5);
+		MoveToEx(hdc, converter.GetX(-200), converter.GetY(sin(-200 * a) + b), nullptr);
+		for (int i = -200; i < 200; i++) {
+			auto y = Sin(i, a, b);
+			LineTo(hdc, converter.GetX(i), converter.GetY(y));
+		}
 
-		
-
-		auto r = 1;
-		auto phi = M_PI / 4;
-	
 		DeleteObject(pen1);
 		DeleteObject(pen2);
 		DeleteObject(pen3);
-		DeleteObject(pen4);
+		DeleteObject(pen5);
 	}
 
-private:
-	static double PolarToX(double r, double phi)
-	{
-		return r*cos(phi); // TODO.
-	}
-
-	static double PolarToY(double r, double phi)
-	{
-		return r * sin(phi); // TODO.
-	}
+	//private:
+	//	static double PolarToX(double r, double phi)
+	//	{
+	//		return r * cos(phi); // TODO.
+	//	}
+	//
+	//	static double PolarToY(double r, double phi)
+	//	{
+	//		return r * sin(phi); // TODO.
+	//	}
 };
 
 //===============================================================
@@ -250,11 +244,14 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	return TRUE;
 }
 
+/*
+	sections 4, 3
+
+*/
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	HDC hdc;                   
-	RECT rcTmp;              
-	
+	HDC hdc;
+	RECT rcTmp;
 	static HDC hdcCompat;    // DC for copying bitmap  
 	static RECT rcBmp;       // rectangle that encloses bitmap  
 	static RECT rcTarget;    // rectangle to receive bitmap  
@@ -267,34 +264,34 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static HPEN hpenDot;
 	switch (message)
 	{
-
-	
-
-
 	case WM_LBUTTONDOWN:
 	{
 		down = true;
-	    hdc = GetDC(hWnd);
+		hdc = GetDC(hWnd);
 		auto converter = MathToHdcConverter(hWnd);
 		x = (LOWORD(lParam) - converter.GetClientRect().right / 2) / scale;
 		y = -(HIWORD(lParam) - converter.GetClientRect().bottom / 2) / scale;
+		char str[100];
+		//TODO :: y
+		double yParab = parab(x, a, b, c);
+		double ySin = Sin(x, a, b);
+		if (y + epsP >= yParab && y - epsP <= yParab) {
+			sprintf_s(str, "x=%f Par y=%f", x, yParab);
+			TextOutA(hdc, 1, 1, str, strlen(str));
+		}
+		if (y + epsS >= ySin && y - epsS <= ySin) {
+			sprintf_s(str, "x=%f Sin y=%f", x, ySin);
+			TextOutA(hdc, 1, 20, str, strlen(str));
+		}
 
-		 
-		
-		char str[40];
-		sprintf_s(str, "x=%f y=%f", x, y);
-		TextOutA(hdc, 1, 1, str, strlen(str));
+
 		ReleaseDC(hWnd, hdc);
 		break;
 	}
-
-	
-
 	case WM_MOUSEMOVE:
 
 	{	// Draw a target rectangle or drag the bitmap rectangle,
 		// depending on the status of the fDragRect flag.
-		
 		if (wParam == MK_LBUTTON)
 		{
 			auto converter = MathToHdcConverter(hWnd);
@@ -304,47 +301,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetROP2(hdc, R2_NOTXORPEN);
 			if (!IsRectEmpty(&rcTarget))
 			{
-				InvalidateRect(hWnd,&rcTarget,TRUE);
+				InvalidateRect(hWnd, &rcTarget, TRUE);
 			}
 			UpdateWindow(hWnd);
-			if(x2 > x && y2 > y)
+			if (x2 > x && y2 > y)
 			{
 				SetRect(&rcTarget, converter.GetX(x), converter.GetY(y2), converter.GetX(x2), converter.GetY(y));
 			}
-			else if(x2 < x && y2 < y)
-				{
+			else if (x2 < x && y2 < y)
+			{
 				SetRect(&rcTarget, converter.GetX(x2), converter.GetY(y), converter.GetX(x), converter.GetY(y2));
-				}
-			else if(x2 > x && y2 < y)
+			}
+			else if (x2 > x && y2 < y)
 			{
 				SetRect(&rcTarget, converter.GetX(x), converter.GetY(y), converter.GetX(x2), converter.GetY(y2));
-			} else
+			}
+			else
 			{
 				SetRect(&rcTarget, converter.GetX(x2), converter.GetY(y2), converter.GetX(x), converter.GetY(y));
 			}
 			SelectObject(hdc, (HBRUSH)GetStockObject(NULL_BRUSH));
 			Rectangle(hdc, rcTarget.left, rcTarget.top,
 				rcTarget.right, rcTarget.bottom);
-
-
 		}
-		
-	
+
 		break;
 	}
 
-	case WM_LBUTTONUP :
+	case WM_LBUTTONUP:
+	{
+		if (down)
 		{
-			if(down)
+			if (x != x2 && y != y2)
 			{
-				if (x != x2 && y != y2)
-				{
-					zoom = true;
-				}
+				zoom = true;
 			}
-			InvalidateRect(hWnd, &rcTarget, TRUE);
-			break;
 		}
+		InvalidateRect(hWnd, &rcTarget, TRUE);
+		break;
+	}
 
 	case WM_PAINT:
 	{
@@ -353,17 +348,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		hdc = BeginPaint(hWnd, &ps);
 		Program::OnDraw(hdc, hWnd);
-		
-	
+
+
 		EndPaint(hWnd, &ps);
 		break;
 	}
-	
 
-	
-	
-
-	
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
