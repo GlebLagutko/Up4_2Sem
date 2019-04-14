@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "resource.h"
+#include "Resource.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <algorithm>
@@ -23,8 +23,7 @@ float x = 0;
 float y = 0;
 float x2 = 0;
 float y2 = 0;
-float x3 = 0;
-float y3 = 0;
+
 const float epsS = 2.0;
 const float epsP = 2.0;
 DWORD rgbPar = RGB(0, 200, 100);
@@ -105,12 +104,12 @@ private:
 };
 
 double parab(double x, double a, double b, double c) {
-	auto y = a * (x + x3 )* (x + x3) + b * (x + x3) + c;
+	auto y = a * (x  )* (x ) + b * (x ) + c;
 	return y;
 }
 
 double Sin(double x, double a, double b) {
-	return (sin(a * (x + x3)) + b);
+	return (sin(a * (x )) + b);
 }
 
 class Program
@@ -133,7 +132,7 @@ public:
 		LineTo(hdc, converter.GetX(0), converter.GetY(200));
 		
 		SelectObject(hdc, pen3);
-		MoveToEx(hdc, converter.GetX(-200), converter.GetY(-a * 200 * -200 + b * -200 + c), nullptr);
+		MoveToEx(hdc, converter.GetX(-200), converter.GetY((a * - 200 * -200) + (b * -200) + c), nullptr);
 		for (int i = -200; i < 200; i++) {
 			auto y = parab(i, a, b, c);
 			LineTo(hdc, converter.GetX(i), converter.GetY(y));
@@ -250,6 +249,62 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	return TRUE;
 }
 
+void CreateTextFields(HWND hWnd, HWND hWndEditA,
+HWND hWndEditB,
+HWND hWndEditC
+)
+{
+	 hWndEditA = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
+		WS_CHILD | WS_VISIBLE, 50, 10, 40,
+		20, hWnd, NULL, NULL, NULL);
+
+	hWndEditB = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
+		WS_CHILD | WS_VISIBLE, 50, 40, 40,
+		20, hWnd, NULL, NULL, NULL);
+	
+    hWndEditC = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
+		WS_CHILD | WS_VISIBLE, 50, 70, 40,
+		20, hWnd, NULL, NULL, NULL);
+	
+
+}
+
+BOOL CALLBACK DlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
+	LPARAM lParam)
+{
+	HWND hWndEditA = NULL;
+	HWND hWndEditB = NULL;
+	HWND hWndEditC = NULL;
+	HWND buttonA = NULL;
+	HWND buttonB = NULL;
+	HWND buttonC = NULL;
+	switch (msg)
+	{
+	case WM_CREATE:
+	{
+		CreateTextFields(hWnd, hWndEditA, hWndEditB, hWndEditC);
+	}
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wParam))
+		{
+		case IDOK:
+			a = 0.7;
+			b = 2;
+			c = 7;
+			EndDialog(hwndDlg, 1);
+			return TRUE;
+		}
+	}
+	break;
+	case WM_CLOSE:
+	{
+		EndDialog(hwndDlg, 0);
+		return FALSE;
+	}
+	}
+	return FALSE;
+}
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -266,16 +321,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static POINT pt;
 	static HPEN hpenDot;
 	HWND hWndEditA = NULL;
-	HWND hWndEditB;
-	HWND hWndEditC;
+	HWND hWndEditB = NULL;
+	HWND hWndEditC = NULL;
+	HWND buttonA = NULL;
+	HWND buttonB = NULL;
+	HWND buttonC = NULL;
+	PAINTSTRUCT ps;
 	
 	switch (message)
 	{
-	case WM_CREATE :
-		{
+	case WM_CREATE:
+	{
 		hdc = GetDC(hWnd);
 		hMenubar = CreateMenu();
-	    hMenu = CreateMenu();
+		hMenu = CreateMenu();
 
 		AppendMenuW(hMenu, MF_STRING, 0, L"&Color Par");
 		AppendMenuW(hMenu, MF_STRING, 1, L"&Color Sin");
@@ -285,36 +344,68 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		SetMenu(hWnd, hMenu);
 		SetMenu(hWnd, hMenubar);
 
-		hWndEditA = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
-			WS_CHILD | WS_VISIBLE, 850, 10, 40,
-			20, hWnd, NULL, NULL, NULL);
-		hWndEditB = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
-			WS_CHILD | WS_VISIBLE, 850, 40, 40,
-			20, hWnd, NULL, NULL, NULL);
-		hWndEditC = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
-			WS_CHILD | WS_VISIBLE, 850, 70, 40,
-			20, hWnd, NULL, NULL, NULL);
-		
-	/*	auto TextBoxA = CreateWindow(L"EDIT",
-			L" ",
-			WS_BORDER | WS_CHILD | WS_VISIBLE,
-			850, 10, 50, 20,
-			hWnd, (HMENU)1, NULL, NULL);
-		auto TextBoxB = CreateWindow(L"EDIT",
-			L" ",
-			WS_BORDER | WS_CHILD | WS_VISIBLE,
-			850, 40, 50, 20,
-			hWnd, (HMENU)1, NULL, NULL);
-		auto TextBoxC = CreateWindow(L"EDIT",
-			L" ",
-			WS_BORDER | WS_CHILD | WS_VISIBLE,
-			850, 70, 50, 20,
-			hWnd, (HMENU)1, NULL, NULL);*/
-		
-		
-		
+		//CreateTextFields(hWnd, hWndEditA, hWndEditB, hWndEditC); 
+
+
+
+	}
+	break;
+	case WM_COMMAND:
+	{
+		hdc = GetDC(hWnd);
+		switch (wParam)
+		{
+		case 0:
+		{
+			CHOOSECOLOR cc = { 0 };
+			cc.lStructSize = sizeof(cc);
+			COLORREF cust_colors[16] = { 0 };
+			cc.lpCustColors = cust_colors;
+
+			if (ChooseColor(&cc)) {
+				rgbPar = cc.rgbResult;
+
+				Program::OnDraw(hdc, hWnd);
+			}
+
 		}
 		break;
+		case 1:
+		{
+			CHOOSECOLOR cc = { 0 };
+			cc.lStructSize = sizeof(cc);
+			COLORREF cust_colors[16] = { 0 };
+			cc.lpCustColors = cust_colors;
+
+			if (ChooseColor(&cc)) {
+				rgbSin = cc.rgbResult;
+				Program::OnDraw(hdc, hWnd);
+			}
+
+		}
+		break;
+
+		case 2 :
+		{
+			
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_DLGFIRST), hWnd, (DLGPROC)DlgProc);
+	//	auto hWndDlg = DialogBoxParamA(hInst,M, hWnd, DlgProc);
+			GetClientRect(hWnd, &rc);
+			FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW + 1));
+
+			Program::OnDraw(hdc, hWnd);
+		}
+		break;
+		}
+
+
+
+
+	}
+
+
+	
+
 	case WM_LBUTTONDOWN:
 	{
 		down = true;
@@ -400,57 +491,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	
 	}
 	break;
-	case WM_COMMAND:
-	{
-		hdc = GetDC(hWnd);
-		switch (wParam)
-		{
-		case 0:
-		{
-			CHOOSECOLOR cc = { 0 };
-			cc.lStructSize = sizeof(cc);
-			COLORREF cust_colors[16] = { 0 };
-			cc.lpCustColors = cust_colors;
-
-			if (ChooseColor(&cc)) {
-				rgbPar = cc.rgbResult;
-			
-				Program::OnDraw(hdc, hWnd);
-			}
-
-		}
-		break;
-		case 1:
-		{
-			CHOOSECOLOR cc = { 0 };
-			cc.lStructSize = sizeof(cc);
-			COLORREF cust_colors[16] = { 0 };
-			cc.lpCustColors = cust_colors;
-
-			if (ChooseColor(&cc)) {
-				rgbSin = cc.rgbResult;
-				Program::OnDraw(hdc, hWnd);
-			}
-			break;
-		}
-		case 2 :
-		{
-			
-		}
-		break;
-		}
-
-
-	}
-	break;
-	case WM_KEYDOWN :
-		{
-		
-		}
-	break;
+	
 	case WM_PAINT:
 	{
-		PAINTSTRUCT ps;
+		
 		hdc = GetDC(hWnd);
 		
 
@@ -459,6 +503,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 
 		EndPaint(hWnd, &ps);
+		
 		
 	}
 	break;
