@@ -5,24 +5,34 @@
 #include <algorithm>
 #include <ostream>
 #include <iostream>
+#include <commdlg.h>
+
 
 //===============================================================
 //===============================================================
 
 //Function i*i - 3*i + 3
 
-const double scale = 10;
-const double a = 0.5;
-const double b = 6;
-const double c = 5;
+double scale = 10;
+double a = 0.7;
+double b = 3;
+double c = -7;
 bool down = false;
-bool zoom = false;
+bool changes = false;
 float x = 0;
 float y = 0;
 float x2 = 0;
 float y2 = 0;
-const float epsS = 5.0;
-const float epsP = 5.0;
+float x3 = 0;
+float y3 = 0;
+const float epsS = 2.0;
+const float epsP = 2.0;
+DWORD rgbPar = RGB(0, 200, 100);
+DWORD rgbSin = RGB(100, 0, 200);
+HMENU hMenubar;
+HMENU hMenu;
+
+
 
 namespace Colors
 {
@@ -44,6 +54,8 @@ namespace Colors
 	static const COLORREF Sienna1 = FromHex(0xFF8247);
 	static const COLORREF Turquoise3 = FromHex(0x00C5CD);
 }
+
+
 
 class MathToHdcConverter
 {
@@ -93,12 +105,12 @@ private:
 };
 
 double parab(double x, double a, double b, double c) {
-	auto y = a * x * x + b * x + c;
+	auto y = a * (x + x3 )* (x + x3) + b * (x + x3) + c;
 	return y;
 }
 
 double Sin(double x, double a, double b) {
-	return (sin(a * x) + b);
+	return (sin(a * (x + x3)) + b);
 }
 
 class Program
@@ -107,13 +119,11 @@ public:
 	static void OnDraw(HDC hdc, HWND hWnd)
 	{
 		auto pen1 = CreatePen(PS_SOLID, 2, Colors::Black);
-		auto pen2 = CreatePen(PS_SOLID, 1, RGB(200, 100, 0));
-		auto pen3 = CreatePen(PS_SOLID, 3, RGB(0, 200, 100));
-		auto pen5 = CreatePen(PS_DOT, 1, RGB(100, 0, 200));
-
-		auto penBrush = LOGBRUSH{};
-		penBrush.lbColor = Colors::Turquoise3;
-		//auto pen4 = ExtCreatePen(PS_GEOMETRIC | PS_DASH, 3, &penBrush, 0, nullptr);
+		
+		auto pen3 = CreatePen(PS_SOLID, 4, rgbPar);
+		auto pen5 = CreatePen(PS_DOT, 1,rgbSin);
+	
+		
 
 		auto converter = MathToHdcConverter(hWnd);
 
@@ -121,12 +131,7 @@ public:
 		LineTo(hdc, converter.GetX(300), converter.GetY(0));
 		MoveToEx(hdc, converter.GetX(0), converter.GetY(-200), nullptr);
 		LineTo(hdc, converter.GetX(0), converter.GetY(200));
-		auto hOldPen = SelectObject(hdc, pen2);
-		/*MoveToEx(hdc, converter.GetX(-200), converter.GetY(400), nullptr);
-		for (int i = -200; i < 200; i++) {
-			auto y = -2 * i;
-			LineTo(hdc, converter.GetX(i), converter.GetY(y));
-		}*/
+		
 		SelectObject(hdc, pen3);
 		MoveToEx(hdc, converter.GetX(-200), converter.GetY(-a * 200 * -200 + b * -200 + c), nullptr);
 		for (int i = -200; i < 200; i++) {
@@ -141,28 +146,19 @@ public:
 		}
 
 		DeleteObject(pen1);
-		DeleteObject(pen2);
+	
 		DeleteObject(pen3);
 		DeleteObject(pen5);
 	}
 
-	//private:
-	//	static double PolarToX(double r, double phi)
-	//	{
-	//		return r * cos(phi); // TODO.
-	//	}
-	//
-	//	static double PolarToY(double r, double phi)
-	//	{
-	//		return r * sin(phi); // TODO.
-	//	}
 };
+
 
 //===============================================================
 //===============================================================
 
 #define MAX_LOADSTRING 100
-
+HWND hWnd;
 HINSTANCE hInst;
 WCHAR szTitle[MAX_LOADSTRING] = L"Drawing";
 WCHAR szWindowClass[MAX_LOADSTRING] = L"Drawing_App";
@@ -171,6 +167,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -205,6 +202,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	return (int)msg.wParam;
 }
 
+
+
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
 	WNDCLASSEXW wcex;
@@ -223,6 +222,8 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.lpszClassName = szWindowClass;
 	wcex.hIconSm = nullptr;
 
+
+
 	return RegisterClassExW(&wcex);
 }
 
@@ -232,6 +233,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+
+	
+
+	ShowWindow(hWnd, nCmdShow);
+	UpdateWindow(hWnd);
 
 	if (!hWnd)
 	{
@@ -244,14 +250,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	return TRUE;
 }
 
-/*
-	sections 4, 3
 
-*/
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	HDC hdc;
-	RECT rcTmp;
+	RECT rc;
 	static HDC hdcCompat;    // DC for copying bitmap  
 	static RECT rcBmp;       // rectangle that encloses bitmap  
 	static RECT rcTarget;    // rectangle to receive bitmap  
@@ -262,8 +265,56 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static COLORREF crBkgnd; // color of client-area background  
 	static POINT pt;
 	static HPEN hpenDot;
+	HWND hWndEditA = NULL;
+	HWND hWndEditB;
+	HWND hWndEditC;
+	
 	switch (message)
 	{
+	case WM_CREATE :
+		{
+		hdc = GetDC(hWnd);
+		hMenubar = CreateMenu();
+	    hMenu = CreateMenu();
+
+		AppendMenuW(hMenu, MF_STRING, 0, L"&Color Par");
+		AppendMenuW(hMenu, MF_STRING, 1, L"&Color Sin");
+		AppendMenuW(hMenu, MF_STRING, 2, L"&Param");
+		AppendMenuW(hMenubar, MF_POPUP, (UINT_PTR)hMenu, L"&Edit");
+
+		SetMenu(hWnd, hMenu);
+		SetMenu(hWnd, hMenubar);
+
+		hWndEditA = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
+			WS_CHILD | WS_VISIBLE, 850, 10, 40,
+			20, hWnd, NULL, NULL, NULL);
+		hWndEditB = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
+			WS_CHILD | WS_VISIBLE, 850, 40, 40,
+			20, hWnd, NULL, NULL, NULL);
+		hWndEditC = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
+			WS_CHILD | WS_VISIBLE, 850, 70, 40,
+			20, hWnd, NULL, NULL, NULL);
+		
+	/*	auto TextBoxA = CreateWindow(L"EDIT",
+			L" ",
+			WS_BORDER | WS_CHILD | WS_VISIBLE,
+			850, 10, 50, 20,
+			hWnd, (HMENU)1, NULL, NULL);
+		auto TextBoxB = CreateWindow(L"EDIT",
+			L" ",
+			WS_BORDER | WS_CHILD | WS_VISIBLE,
+			850, 40, 50, 20,
+			hWnd, (HMENU)1, NULL, NULL);
+		auto TextBoxC = CreateWindow(L"EDIT",
+			L" ",
+			WS_BORDER | WS_CHILD | WS_VISIBLE,
+			850, 70, 50, 20,
+			hWnd, (HMENU)1, NULL, NULL);*/
+		
+		
+		
+		}
+		break;
 	case WM_LBUTTONDOWN:
 	{
 		down = true;
@@ -275,6 +326,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//TODO :: y
 		double yParab = parab(x, a, b, c);
 		double ySin = Sin(x, a, b);
+	
 		if (y + epsP >= yParab && y - epsP <= yParab) {
 			sprintf_s(str, "x=%f Par y=%f", x, yParab);
 			TextOutA(hdc, 1, 1, str, strlen(str));
@@ -285,9 +337,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 
 
+
 		ReleaseDC(hWnd, hdc);
-		break;
+		
 	}
+	break;
 	case WM_MOUSEMOVE:
 
 	{	// Draw a target rectangle or drag the bitmap rectangle,
@@ -299,6 +353,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			y2 = -(HIWORD(lParam) - converter.GetClientRect().bottom / 2) / scale;
 			hdc = GetDC(hWnd);
 			SetROP2(hdc, R2_NOTXORPEN);
+			auto pen2 = CreatePen(PS_SOLID, 1, RGB(0, 0, 1000));
+			SelectObject(hdc, pen2);
 			if (!IsRectEmpty(&rcTarget))
 			{
 				InvalidateRect(hWnd, &rcTarget, TRUE);
@@ -325,35 +381,89 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				rcTarget.right, rcTarget.bottom);
 		}
 
-		break;
+		
 	}
-
+	break;
 	case WM_LBUTTONUP:
 	{
 		if (down)
 		{
-			if (x != x2 && y != y2)
+			if (x != x2 && y != y2 && x2 != 0 && y2 != 0)
 			{
-				zoom = true;
+				hdc = GetDC(hWnd);
+				auto converter = MathToHdcConverter(hWnd);
+				
+				
 			}
 		}
 		InvalidateRect(hWnd, &rcTarget, TRUE);
-		break;
+	
 	}
+	break;
+	case WM_COMMAND:
+	{
+		hdc = GetDC(hWnd);
+		switch (wParam)
+		{
+		case 0:
+		{
+			CHOOSECOLOR cc = { 0 };
+			cc.lStructSize = sizeof(cc);
+			COLORREF cust_colors[16] = { 0 };
+			cc.lpCustColors = cust_colors;
 
+			if (ChooseColor(&cc)) {
+				rgbPar = cc.rgbResult;
+			
+				Program::OnDraw(hdc, hWnd);
+			}
+
+		}
+		break;
+		case 1:
+		{
+			CHOOSECOLOR cc = { 0 };
+			cc.lStructSize = sizeof(cc);
+			COLORREF cust_colors[16] = { 0 };
+			cc.lpCustColors = cust_colors;
+
+			if (ChooseColor(&cc)) {
+				rgbSin = cc.rgbResult;
+				Program::OnDraw(hdc, hWnd);
+			}
+			break;
+		}
+		case 2 :
+		{
+			
+		}
+		break;
+		}
+
+
+	}
+	break;
+	case WM_KEYDOWN :
+		{
+		
+		}
+	break;
 	case WM_PAINT:
 	{
 		PAINTSTRUCT ps;
 		hdc = GetDC(hWnd);
+		
 
 		hdc = BeginPaint(hWnd, &ps);
 		Program::OnDraw(hdc, hWnd);
 
 
 		EndPaint(hWnd, &ps);
-		break;
+		
 	}
-
+	break;
+	
+	
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
