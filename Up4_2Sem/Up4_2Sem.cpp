@@ -12,6 +12,8 @@
 //===============================================================
 
 //Function i*i - 3*i + 3
+#define DLGTITLE  L"My dialog"
+#define DLGFONT   L"MS Shell Dlg"
 
 double scale = 10;
 double a = 0.7;
@@ -54,8 +56,52 @@ namespace Colors
 	static const COLORREF Turquoise3 = FromHex(0x00C5CD);
 }
 
+namespace Control
+{
+	int const IDC_TestTextBoxB = 1001;
+	int const IDC_TestTextBoxA = 1002;
+	int const IDC_TestButton = 1003;
+	int const IDC_TestTextBoxC = 1004;
+	int const IDC_TestARadioButton = 1005;
+	int const IDC_TestBRadioButton = 1006;
+	int const IDC_TestComboBox = 1007;
+	int const IDC_InvisibleButton = 1008;
+	int const IDC_Test2GroupBox = 1009;
+	int const IDC_TestCRadioButton = 1010;
+	int const IDC_TestDRadioButton = 1011;
+	int const IDC_MessageButton = 1012;
+	int const IDC_TestLabel = 1013;
+}
 
-
+#pragma pack(push, 4)                 
+static struct
+{
+	DWORD  style;
+	DWORD  dwExtendedStyle;
+	WORD   ccontrols; // ?????????? ?????????. ???????? ????? ????????? ????? ???, ? ???? ????????? ????? ???? ?????, ?? ??????
+	short  x;
+	short  y;
+	short  cx;
+	short  cy;
+	WORD   menu;
+	WORD   windowClass;
+	WCHAR  wszTitle[ARRAYSIZE(DLGTITLE)];
+	short  pointsize; // ??????????????? ?????????. ??. FromUnit ??? ?????????????? ?????????.
+	WCHAR  wszFont[ARRAYSIZE(DLGFONT)];
+}
+EmptyDialogTemplate =
+{
+   DS_SHELLFONT | DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU, // ?????????!
+   0x0,
+   0,
+   0, 0, 200, 100,
+   0,                       // menu: none
+   0,                       // window class: none
+   DLGTITLE,                // Window caption
+   8,                       // font pointsize
+   DLGFONT,
+};
+#pragma pack(pop)
 class MathToHdcConverter
 {
 	HWND _hWnd;
@@ -112,6 +158,17 @@ double Sin(double x, double a, double b) {
 	return (sin(a * (x )) + b);
 }
 
+double GetNewParamm(HWND hWnd)
+{
+	auto textLength = GetWindowTextLengthW(hWnd);
+	auto buffer = new wchar_t[textLength + 1];
+	GetWindowText(hWnd, buffer, textLength + 1);
+	double result = wcstod(buffer,NULL);
+	return result;
+}
+
+
+
 class Program
 {
 public:
@@ -158,6 +215,7 @@ public:
 
 #define MAX_LOADSTRING 100
 HWND hWnd;
+HWND hwndDlg;
 HINSTANCE hInst;
 WCHAR szTitle[MAX_LOADSTRING] = L"Drawing";
 WCHAR szWindowClass[MAX_LOADSTRING] = L"Drawing_App";
@@ -166,7 +224,7 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
-
+HWND _hDialog;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	_In_opt_ HINSTANCE hPrevInstance,
@@ -249,51 +307,65 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	return TRUE;
 }
 
-void CreateTextFields(HWND hWnd, HWND hWndEditA,
-HWND hWndEditB,
-HWND hWndEditC
-)
-{
-	 hWndEditA = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
-		WS_CHILD | WS_VISIBLE, 50, 10, 40,
-		20, hWnd, NULL, NULL, NULL);
 
-	hWndEditB = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
-		WS_CHILD | WS_VISIBLE, 50, 40, 40,
-		20, hWnd, NULL, NULL, NULL);
-	
-    hWndEditC = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
-		WS_CHILD | WS_VISIBLE, 50, 70, 40,
-		20, hWnd, NULL, NULL, NULL);
-	
 
-}
-
-BOOL CALLBACK DlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
+INT_PTR CALLBACK DlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 	LPARAM lParam)
-{
-	HWND hWndEditA = NULL;
-	HWND hWndEditB = NULL;
-	HWND hWndEditC = NULL;
-	HWND buttonA = NULL;
-	HWND buttonB = NULL;
-	HWND buttonC = NULL;
+{	
 	switch (msg)
 	{
-	case WM_CREATE:
+	case WM_INITDIALOG:
 	{
-		CreateTextFields(hWnd, hWndEditA, hWndEditB, hWndEditC);
+		CreateWindowEx(NULL, TEXT("STATIC"), TEXT("Edit a : "),
+			WS_CHILD | WS_VISIBLE, 30, 10, 60,
+			20, hwndDlg, nullptr, nullptr, nullptr);
+		CreateWindowEx(NULL, TEXT("Edit"), TEXT(""),
+			WS_CHILD | WS_VISIBLE, 100, 10, 60,
+			20, hwndDlg, (HMENU)Control::IDC_TestTextBoxA, nullptr, nullptr);
+
+		CreateWindowEx(NULL, TEXT("STATIC"), TEXT("Edit b : "),
+			WS_CHILD | WS_VISIBLE, 30, 40, 60,
+			20, hwndDlg, nullptr, nullptr, nullptr);
+		CreateWindowEx(NULL, TEXT("Edit"), TEXT(""),
+			WS_CHILD | WS_VISIBLE, 100, 40, 60,
+			20, hwndDlg, (HMENU)Control::IDC_TestTextBoxB, nullptr, nullptr);
+
+		CreateWindowEx(NULL, TEXT("STATIC"), TEXT("Edit c : "),
+			WS_CHILD | WS_VISIBLE, 30, 70, 60,
+			20, hwndDlg, nullptr, nullptr, nullptr);
+		CreateWindowEx(NULL, TEXT("Edit"), TEXT(""),
+			WS_CHILD | WS_VISIBLE, 100, 70, 60,
+			20, hwndDlg,(HMENU) Control::IDC_TestTextBoxC, nullptr, nullptr);
+
+		CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Button"), TEXT("Ok"),
+			WS_CHILD | WS_VISIBLE, 100, 100, 30,
+			20, hwndDlg, (HMENU)Control::IDC_TestButton, NULL, NULL);
+		return (INT_PTR)TRUE;
 	}
 	case WM_COMMAND:
 	{
-		switch (LOWORD(wParam))
+		if(wParam == Control::IDC_TestButton)
 		{
-		case IDOK:
-			a = 0.7;
-			b = 2;
-			c = 7;
-			EndDialog(hwndDlg, 1);
-			return TRUE;
+			auto TextA = GetDlgItem(hwndDlg, Control::IDC_TestTextBoxA);
+			auto TextB = GetDlgItem(hwndDlg, Control::IDC_TestTextBoxB);
+			auto TextC = GetDlgItem(hwndDlg, Control::IDC_TestTextBoxC);
+			if (GetWindowTextLengthW(TextA) != 0)
+				a = GetNewParamm(TextA);
+			
+			if (GetWindowTextLengthW(TextB) != 0)
+			b = GetNewParamm(TextB);
+
+			if (GetWindowTextLengthW(TextC) != 0)
+			c = GetNewParamm(TextC);
+			
+			/*
+			if (auto textLength = GetWindowTextLengthW(TextA) != 0)
+				a = GetNewParamm(TextA);
+			if (auto textLength = GetWindowTextLengthW(TextB) != 0)
+				b = GetNewParamm(TextB);
+			if (auto textLength = GetWindowTextLengthW(TextC) != 0)
+				c = GetNewParamm(TextC);*/
+			EndDialog(hwndDlg, IDCANCEL);
 		}
 	}
 	break;
@@ -305,6 +377,7 @@ BOOL CALLBACK DlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 	}
 	return FALSE;
 }
+
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -320,12 +393,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static COLORREF crBkgnd; // color of client-area background  
 	static POINT pt;
 	static HPEN hpenDot;
-	HWND hWndEditA = NULL;
-	HWND hWndEditB = NULL;
-	HWND hWndEditC = NULL;
-	HWND buttonA = NULL;
-	HWND buttonB = NULL;
-	HWND buttonC = NULL;
+	
+
 	PAINTSTRUCT ps;
 	
 	switch (message)
@@ -343,10 +412,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		SetMenu(hWnd, hMenu);
 		SetMenu(hWnd, hMenubar);
-
-		//CreateTextFields(hWnd, hWndEditA, hWndEditB, hWndEditC); 
-
-
 
 	}
 	break;
@@ -387,9 +452,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case 2 :
 		{
-			
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_DLGFIRST), hWnd, (DLGPROC)DlgProc);
-	//	auto hWndDlg = DialogBoxParamA(hInst,M, hWnd, DlgProc);
+			DialogBoxIndirectParamW(hInst, (LPCDLGTEMPLATEW)&EmptyDialogTemplate, hWnd, DlgProc, NULL);
 			GetClientRect(hWnd, &rc);
 			FillRect(hdc, &rc, (HBRUSH)(COLOR_WINDOW + 1));
 
@@ -397,14 +460,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 		}
-
-
-
-
 	}
-
-
-	
 
 	case WM_LBUTTONDOWN:
 	{

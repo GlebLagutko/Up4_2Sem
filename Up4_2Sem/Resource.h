@@ -12,7 +12,7 @@
 #define IDR_MAINFRAME			128
 #define IDD_WINDRAWING_DIALOG	102
 #define MyDialog			     103
-#define IDM_ABOUT				104
+#define IDM_ABOUT				103
 #define IDM_EXIT				105
 #define IDI_WINDRAWING			107
 #define IDI_SMALL				108
