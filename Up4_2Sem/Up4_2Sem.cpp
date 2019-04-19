@@ -25,7 +25,6 @@ float x = 0;
 float y = 0;
 float x2 = 0;
 float y2 = 0;
-
 const float epsS = 2.0;
 const float epsP = 2.0;
 DWORD rgbPar = RGB(0, 200, 100);
@@ -166,8 +165,6 @@ double GetNewParamm(HWND hWnd)
 	double result = wcstod(buffer,NULL);
 	return result;
 }
-
-
 
 class Program
 {
@@ -319,21 +316,21 @@ INT_PTR CALLBACK DlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 		CreateWindowEx(NULL, TEXT("STATIC"), TEXT("Edit a : "),
 			WS_CHILD | WS_VISIBLE, 30, 10, 60,
 			20, hwndDlg, nullptr, nullptr, nullptr);
-		CreateWindowEx(NULL, TEXT("Edit"), TEXT(""),
+		CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
 			WS_CHILD | WS_VISIBLE, 100, 10, 60,
 			20, hwndDlg, (HMENU)Control::IDC_TestTextBoxA, nullptr, nullptr);
 
 		CreateWindowEx(NULL, TEXT("STATIC"), TEXT("Edit b : "),
 			WS_CHILD | WS_VISIBLE, 30, 40, 60,
 			20, hwndDlg, nullptr, nullptr, nullptr);
-		CreateWindowEx(NULL, TEXT("Edit"), TEXT(""),
+		CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
 			WS_CHILD | WS_VISIBLE, 100, 40, 60,
 			20, hwndDlg, (HMENU)Control::IDC_TestTextBoxB, nullptr, nullptr);
 
 		CreateWindowEx(NULL, TEXT("STATIC"), TEXT("Edit c : "),
 			WS_CHILD | WS_VISIBLE, 30, 70, 60,
 			20, hwndDlg, nullptr, nullptr, nullptr);
-		CreateWindowEx(NULL, TEXT("Edit"), TEXT(""),
+		CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("Edit"), TEXT(""),
 			WS_CHILD | WS_VISIBLE, 100, 70, 60,
 			20, hwndDlg,(HMENU) Control::IDC_TestTextBoxC, nullptr, nullptr);
 
@@ -357,14 +354,7 @@ INT_PTR CALLBACK DlgProc(HWND hwndDlg, UINT msg, WPARAM wParam,
 
 			if (GetWindowTextLengthW(TextC) != 0)
 			c = GetNewParamm(TextC);
-			
-			/*
-			if (auto textLength = GetWindowTextLengthW(TextA) != 0)
-				a = GetNewParamm(TextA);
-			if (auto textLength = GetWindowTextLengthW(TextB) != 0)
-				b = GetNewParamm(TextB);
-			if (auto textLength = GetWindowTextLengthW(TextC) != 0)
-				c = GetNewParamm(TextC);*/
+
 			EndDialog(hwndDlg, IDCANCEL);
 		}
 	}
@@ -446,7 +436,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				rgbSin = cc.rgbResult;
 				Program::OnDraw(hdc, hWnd);
 			}
-
+			 
 		}
 		break;
 
